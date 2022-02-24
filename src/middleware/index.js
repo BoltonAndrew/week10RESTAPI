@@ -1,22 +1,6 @@
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../user/user.model");
-
-exports.findByToken = async (req, res, next) => {
-  try {
-    const token = req.header("Authorization").replace("Bearer ", "");
-    const decodedToken = await jwt.verify(token, process.env.SECRET);
-    const user = await User.findOne({ _id: decodedToken._id });
-    if (!user) {
-      throw new Error();
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ message: "Unsuccessful, please check logs" });
-  }
-};
 
 exports.hashPassword = async (req, res, next) => {
   try {
@@ -40,5 +24,18 @@ exports.decryptPassword = async (req, res, next) => {
   } catch (error) {
     console.log(error);
     res.status(500).send({ message: "Unsuccessful, please check logs" });
+  }
+};
+
+exports.tokenCheck = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization").replace("Bearer ", "");
+    const decoded = await jwt.verify(token, process.env.SECRET);
+    const user = await User.findById(decoded._id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ err: error.message });
   }
 };
